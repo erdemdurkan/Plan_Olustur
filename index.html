@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plan Adet Düşürme Aracı</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      padding: 48px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+      background-size: 400% 400%;
+      animation: gradientShift 8s ease infinite;
+    }
+
+    @keyframes gradientShift {
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    h1 {
+      text-align: center;
+      color: #1a202c;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.025em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 1.1rem;
+      margin-bottom: 48px;
+      font-weight: 400;
+    }
+
+    .upload-section {
+      margin-bottom: 32px;
+    }
+
+    .file-group {
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    label i {
+      color: #667eea;
+      font-size: 1.2rem;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      border: 2px dashed #d1d5db;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .file-input-wrapper:hover {
+      border-color: #667eea;
+      background: linear-gradient(145deg, #f0f4ff 0%, #e0e7ff 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px -8px rgba(102, 126, 234, 0.4);
+    }
+
+    .file-input-wrapper.has-file {
+      border-color: #10b981;
+      background: linear-gradient(145deg, #f0fdf4 0%, #ecfdf5 100%);
+      border-style: solid;
+    }
+
+    .file-input-wrapper.has-file:hover {
+      border-color: #059669;
+      background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+    }
+
+    input[type="file"] {
+      position: absolute;
+      left: -9999px;
+      opacity: 0;
+    }
+
+    .file-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .file-display i {
+      font-size: 1.5rem;
+      color: #667eea;
+    }
+
+    .file-display.has-file {
+      color: #059669;
+    }
+
+    .file-display.has-file i {
+      color: #10b981;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: #374151;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .convert-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 18px 32px;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.025em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px -4px rgba(102, 126, 234, 0.4);
+    }
+
+    .convert-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 25px -8px rgba(102, 126, 234, 0.6);
+    }
+
+    .convert-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .convert-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .convert-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .convert-btn:hover::before {
+      left: 100%;
+    }
+
+    #status {
+      margin-top: 24px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+    }
+
+    #status.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #status.success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    #status.processing {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .feature-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 32px 24px;
+        margin: 10px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .file-input-wrapper {
+        padding: 20px 16px;
+      }
+    }
+
+    /* Glassmorphism effects */
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="feature-badge">
+      <i class="fas fa-magic"></i>
+      Excel İşleyici
+    </div>
+
+    <h1>Plan Adet Düşürme Aracı</h1>
+    <p class="subtitle">Excel dosyalarınızı yükleyip otomatik hesaplama yapın</p>
+
+    <div class="upload-section">
+      <div class="file-group">
+        <label for="uretimFile">
+          <i class="fas fa-file-excel"></i>
+          EX_URETIM2 Dosyasını Yükle
+        </label>
+        <div class="file-input-wrapper" id="uretimWrapper">
+          <input type="file" id="uretimFile" accept=".xlsx, .xls" />
+          <div class="file-display" id="uretimDisplay">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Dosya seçmek için tıklayın (.xlsx, .xls)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="file-group">
+        <label for="planFile">
+          <i class="fas fa-file-alt"></i>
+          Montaj Plan Dosyasını Yükle
+        </label>
+        <div class="file-input-wrapper" id="planWrapper">
+          <input type="file" id="planFile" accept=".xlsx, .xlsm" />
+          <div class="file-display" id="planDisplay">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Dosya seçmek için tıklayın (.xlsx, .xlsm)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="convert-btn" onclick="convertFiles()" id="convertBtn" disabled>
+      <i class="fas fa-cogs"></i>
+      İşlemi Başlat
+    </button>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // Dosya seçim fonksiyonları
+    document.getElementById('uretimFile').addEventListener('change', function (e) {
+      handleFileSelect(e, 'uretim');
+    });
+
+    document.getElementById('planFile').addEventListener('change', function (e) {
+      handleFileSelect(e, 'plan');
+    });
+
+    // Wrapper'lara tıklama eventi
+    document.getElementById('uretimWrapper').addEventListener('click', () => {
+      document.getElementById('uretimFile').click();
+    });
+
+    document.getElementById('planWrapper').addEventListener('click', () => {
+      document.getElementById('planFile').click();
+    });
+
+    function handleFileSelect(event, type) {
+      const file = event.target.files[0];
+      const wrapper = document.getElementById(type + 'Wrapper');
+      const display = document.getElementById(type + 'Display');
+
+      if (file) {
+        wrapper.classList.add('has-file');
+        display.classList.add('has-file');
+        display.innerHTML = `
+          <i class="fas fa-check-circle"></i>
+          <span class="file-name">${file.name}</span>
+        `;
+      }
+
+      checkFilesReady();
+    }
+
+    function checkFilesReady() {
+      const uretimFile = document.getElementById('uretimFile').files[0];
+      const planFile = document.getElementById('planFile').files[0];
+      const convertBtn = document.getElementById('convertBtn');
+
+      if (uretimFile && planFile) {
+        convertBtn.disabled = false;
+        convertBtn.innerHTML = '<i class="fas fa-rocket"></i> İşlemi Başlat';
+      } else {
+        convertBtn.disabled = true;
+        convertBtn.innerHTML = '<i class="fas fa-cogs"></i> İşlemi Başlat';
+      }
+    }
+
+    function showStatus(message, type) {
+      const status = document.getElementById('status');
+      status.className = `show ${type}`;
+
+      if (type === 'processing') {
+        status.innerHTML = `<span class="loading-spinner"></span>${message}`;
+      } else {
+        status.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+      }
+    }
+
+    async function convertFiles() {
+      const uretimInput = document.getElementById("uretimFile").files[0];
+      const planInput = document.getElementById("planFile").files[0];
+
+      if (!uretimInput || !planInput) {
+        alert("Lütfen her iki dosyayı da yükleyiniz.");
+        return;
+      }
+
+      showStatus("Dönüşüm yapılıyor...", "processing");
+
+      const readExcel = (file) => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          resolve(workbook);
+        };
+        reader.readAsArrayBuffer(file);
+      });
+
+      const uretimWb = await readExcel(uretimInput);
+      const planWb = await readExcel(planInput);
+
+      const uSheet = uretimWb.Sheets[uretimWb.SheetNames[0]];
+      const pSheet = planWb.Sheets["MONTAJPROGRAM"];
+
+      const uData = XLSX.utils.sheet_to_json(uSheet);
+      const pData = XLSX.utils.sheet_to_json(pSheet, { defval: "" });
+
+      // Adet düşme mantığı burada işlenecek
+      uData.forEach(u => {
+        const u_hat = (u["BANT_KODU"] || "").substring(0, 4); // HAT2, HAT5
+        const u_mamul = (u["MAMUL_KODU"] || "").substring(0, 3);
+        const u_sasi = (u["SASI_KODU"] || "").substring(0, 3);
+        let kalanAdet = parseInt(u["ADET"] || 0);
+
+        for (let i = 0; i < pData.length; i++) {
+          const p = pData[i];
+          const p_hat = "HAT" + ((p["BANT"] || "").replace("S", ""));
+          const p_mamul = (p["MAMUL"] || "").substring(0, 3);
+          const p_sasi = (p["SASI 110"] || "").substring(0, 3);
+
+          if (u_hat === p_hat && u_mamul === p_mamul && u_sasi === p_sasi) {
+            let stok = parseInt(p["PLAN"] || 0);
+            if (stok <= 0) continue;
+            if (kalanAdet >= stok) {
+              p["PLAN"] = 0;
+              kalanAdet -= stok;
+            } else {
+              p["PLAN"] = stok - kalanAdet;
+              break;
+            }
+          }
+        }
+      });
+
+      // Yeni sayfa ve dosya olustur
+      const newSheet = XLSX.utils.json_to_sheet(pData);
+      const newWb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(newWb, newSheet, "MONTAJPROGRAM");
+
+      const now = new Date();
+      const timestamp = now.toLocaleDateString("tr-TR").replaceAll(".", "") + "_" + now.getHours().toString().padStart(2, "0") + now.getMinutes().toString().padStart(2, "0");
+      const filename = `PLAN_${timestamp}.xlsx`;
+
+      XLSX.writeFile(newWb, filename);
+
+      showStatus("İşlem tamamlandı! Dosyanız başarıyla indirildi.", "success");
+    }
+  </script>
+</body>
+
+</html>
